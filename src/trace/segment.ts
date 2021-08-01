@@ -21,8 +21,10 @@ import Report from '../services/report';
 import { SegmentFields } from './type';
 import { CustomOptionsType } from '../types';
 
+const segments = [] as SegmentFields[];
+let interval: NodeJS.Timeout;
+
 export default function traceSegment(options: CustomOptionsType) {
-  const segments = [] as SegmentFields[];
   // inject interceptor
   xhrInterceptor(options, segments);
   windowFetch(options, segments);
@@ -33,8 +35,12 @@ export default function traceSegment(options: CustomOptionsType) {
     }
     new Report('SEGMENTS', options.collector).sendByXhr(segments);
   };
-  //report per options.traceTimeInterval min
-  setInterval(() => {
+
+  // report per options.traceTimeInterval min
+  if (interval) {
+    clearTimeout(interval);
+  }
+  interval = setInterval(() => {
     if (!segments.length) {
       return;
     }
